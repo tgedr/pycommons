@@ -33,20 +33,6 @@ err(){
     echo " [ERR]   `date` !!! $__msg "
 }
 
-file_age_days() {
-  local file="$1"
-  local file_time
-  local current_time
-
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-      file_time=$(stat -f %m "$file")
-  else
-      file_time=$(stat -c %Y "$file")
-  fi
-
-  current_time=$(date +%s)
-  echo $(( (current_time - file_time) / 86400 ))
-}
 
 # ---------- CONSTANTS ----------
 export FILE_VARIABLES=${FILE_VARIABLES:-".variables"}

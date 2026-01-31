@@ -43,7 +43,7 @@ jobs:
         if [[ ${{ github.ref }} =~ refs/tags/[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
           ./helper.sh publish
         else
-          echo "Invalid semver tag"
+          echo "invalid semver tag"
         fi
       env:
         PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

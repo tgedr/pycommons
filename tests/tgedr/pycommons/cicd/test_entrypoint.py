@@ -2,7 +2,7 @@
 
 import json
 
-from tgedr.pycommons.entrypoint import entrypoint, parse_arguments
+from tgedr.pycommons.cicd.entrypoint import entrypoint, parse_arguments
 
 
 

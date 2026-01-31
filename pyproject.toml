@@ -1,6 +1,6 @@
 [project]
 name = "tgedr-pycommons"
-version = "0.0.3"
+version = "0.0.4"
 description = "common python code usable across projects"
 authors = [
     {name = "joao tiago viegas",email = "3536754+jtviegas@users.noreply.github.com"}
@@ -28,7 +28,7 @@ dev = [
 
 
 # [project.scripts]
-# run = "ssds_pycommons.pip_entrypoint:entrypoint" 
+# run = "tgedr.pycommons.entrypoint:entrypoint" 
 
 [build-system]
 requires = ["setuptools>=78.1.0", "wheel>=0.45.1"]

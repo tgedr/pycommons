@@ -7,8 +7,8 @@ Common code to be used across projects
 
 ## development
 - main requirements:
-  - __uv__
-  - __bash___
+  - _uv_  
+  - _bash_
 - Clone the repository like this:
 
   ``` bash

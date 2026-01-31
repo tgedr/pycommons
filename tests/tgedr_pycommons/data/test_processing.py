@@ -1,5 +1,5 @@
 import pytest
-from tgedr.pycommons.data.processing import process_text_array
+from tgedr_pycommons.data.processing import process_text_array
 
 
 def test_process_text_array():

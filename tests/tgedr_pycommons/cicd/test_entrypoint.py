@@ -2,11 +2,11 @@
 
 import json
 
-from tgedr.pycommons.cicd.entrypoint import entrypoint, parse_arguments
+from tgedr_pycommons.cicd.entrypoint import entrypoint, parse_arguments
 
 
 
-MODULE = "tests.tgedr.pycommons.classes"
+MODULE = "tests.tgedr_pycommons.classes"
 
 
 def test_parse_arguments(): # noqa: ANN201, D103

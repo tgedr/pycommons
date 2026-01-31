@@ -11,7 +11,7 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+' 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
       with:
@@ -37,7 +37,7 @@ jobs:
       run: ./helper.sh test_coverage_check $TEST_COVERAGE_THRESHOLD
     - name: generate coverage badge
       run: |
-        coverage-badge -o coverage.svg -f && \
+        uv run coverage-badge -o coverage.svg -f && \
           git config --local user.email "action@github.com" && \
           git config --local user.name "GitHub Action" && \
           git add coverage.svg && \

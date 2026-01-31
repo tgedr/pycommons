@@ -39,6 +39,7 @@ jobs:
       run: ./helper.sh build
     - name: publish
       run: |
+        echo "Tag is ${{ github.ref }}"
         if [[ ${{ github.ref }} =~ refs/tags/[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
           ./helper.sh publish
         else

@@ -1,6 +1,8 @@
 # tgedr-pycommons
 
 ![Coverage](./coverage.svg)
+[![PyPI](https://img.shields.io/pypi/v/tgedr-pycommons)](https://pypi.org/project/tgedr-pycommons/)
+
 
 Common code to be used across projects
 

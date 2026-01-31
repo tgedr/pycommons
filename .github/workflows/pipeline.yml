@@ -35,14 +35,6 @@ jobs:
       run: ./helper.sh test
     - name: check coverage
       run: ./helper.sh test_coverage_check $TEST_COVERAGE_THRESHOLD
-    - name: generate coverage badge
-      run: |
-        uv run coverage-badge -o coverage.svg -f && \
-          git config --local user.email "action@github.com" && \
-          git config --local user.name "GitHub Action" && \
-          git add coverage.svg && \
-          git commit -m "Update coverage badge" || exit 0 && \
-          git push
     - name: build
       run: ./helper.sh build
     - name: publish

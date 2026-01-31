@@ -152,6 +152,7 @@ unit_test_coverage_check()
     err "[unit_test_coverage_check] $score doesn't meet $threshold"
     exit 1
   fi
+  uv run genbadge coverage -i coverage.xml -o coverage.svg
   info "[unit_test_coverage_check|out] => $score"
 }
 

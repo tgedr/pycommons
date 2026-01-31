@@ -2,15 +2,17 @@
 
 ![Coverage](./coverage.svg)
 
-[[_TOC_]]
+Common code to be used across projects
 
 
 ## development
+- main requirements:
+  - __uv__
+  - __bash___
+- Clone the repository like this:
 
-Clone the repository like this:
-
-``` bash
-git clone git@github.com:tgedr/pycommons
-```
-
-Open VSCode in the repository folder
+  ``` bash
+  git clone git@github.com:tgedr/pycommons
+  ```
+- cd into the folder: `cd pycommons`
+- install requirements: `./helper.sh reqs`

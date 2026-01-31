@@ -85,35 +85,6 @@ export SRC_DIR=${SRC_DIR:-"${this_folder}/src"}
 export TEST_DIR=${TEST_DIR:-"${this_folder}/tests"}
 # -------------------------------
 # --- main functions
-install_qa_libs(){
-  info "[install_qa_libs|in]"
-  _pwd=`pwd`
-  cd "$this_folder"
-
-  uv sync --group qa
-  local result="$?"
-  if [ ! "$result" -eq "0" ] ; then err "[install_qa_libs] could not install dependencies"; fi
-
-  cd "$_pwd"
-  local msg="[install_qa_libs|out] => ${result}"
-  [[ ! "$result" -eq "0" ]] && info "$msg" && exit 1
-  info "$msg"
-}
-
-uninstall_qa_libs(){
-  info "[uninstall_qa_libs|in]"
-  _pwd=`pwd`
-  cd "$this_folder"
-
-  uv sync --group dev
-  local result="$?"
-  if [ ! "$result" -eq "0" ] ; then err "[uninstall_qa_libs] could not install dependencies"; fi
-
-  cd "$_pwd"
-  local msg="[uninstall_qa_libs|out] => ${result}"
-  [[ ! "$result" -eq "0" ]] && info "$msg" && exit 1
-  info "$msg"
-}
 
 reqs(){
   info "[reqs|in]"

@@ -1,3 +1,4 @@
+import pytest
 from tgedr.pycommons.data.processing import process_text_array
 
 
@@ -25,3 +26,15 @@ def test_process_text_array():
       ]
     actual = process_text_array(x=x, f=lambda s: s.upper())
     assert actual == expected
+
+
+def test_process_text_array_unbalanced():
+    """Test that unbalanced arrays raise ValueError."""
+    # Unbalanced array - different lengths in nested lists
+    x = [
+        ['Apple', 'looking', 'extra'],
+        ['Autonomous', 'cars']
+    ]
+    
+    with pytest.raises(ValueError, match="x must be a balanced array"):
+        process_text_array(x=x, f=lambda s: s.upper())

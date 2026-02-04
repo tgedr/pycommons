@@ -1,6 +1,6 @@
 [project]
 name = "tgedr-pycommons"
-version = "0.0.7"
+version = "0.1.0"
 description = "common python code usable across projects"
 authors = [
     {name = "joao tiago viegas",email = "3536754+jtviegas@users.noreply.github.com"}
@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 
 dependencies = [
-    "pandas>=2.3.0",
+    "numpy>=2.4.1",
 ]
 
 [dependency-groups]
@@ -114,7 +114,7 @@ indent-width = 4
 select = ["ALL"]
 ignore = ["D203", "S101", "D104", "INP001", "D213", "COM812", "I001", 
     "D401", "D407", "RET504", "PLR2004", "FA102", "E501", "EXE002", "PLR0913", 
-    "PLR0912", "C901", "PLR0911", "ANN401"]
+    "PLR0912", "C901", "PLR0911", "D413", "N818", "B024", "ANN401", "SIM300"]
 fixable = ["ALL"]
 unfixable = []
 # Allow unused variables when underscore-prefixed.

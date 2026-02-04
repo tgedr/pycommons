@@ -40,7 +40,7 @@ def process_text_array(x: list, f: Callable[[str], Any]) -> list:
 
     def multidim_process(x: list, f: Callable[[str], Any]) -> list:
         result = []
-        if 1 == np.array(x).ndim:  # noqa: SIM300
+        if 1 == np.array(x).ndim:
             result = unidim_process(x=x, f=f)
         else:
             for s in x:

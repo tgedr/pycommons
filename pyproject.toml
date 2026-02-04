@@ -1,12 +1,12 @@
 [project]
 name = "tgedr-pycommons"
-version = "0.1.0"
+version = "1.0.0"
 description = "common python code usable across projects"
 authors = [
     {name = "joao tiago viegas",email = "3536754+jtviegas@users.noreply.github.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 
 dependencies = [
     "numpy>=2.4.1",

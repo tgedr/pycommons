@@ -1,6 +1,6 @@
 [project]
 name = "tgedr-pycommons"
-version = "1.0.0"
+version = "1.0.1"
 description = "common python code usable across projects"
 authors = [
     {name = "joao tiago viegas",email = "3536754+jtviegas@users.noreply.github.com"}

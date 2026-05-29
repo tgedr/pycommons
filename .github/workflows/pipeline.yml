@@ -24,7 +24,9 @@ jobs:
     - name: install requirements
       run: ./helper.sh reqs
     - name: "run SAST test (bandit)"
-      run: ./helper.sh sast_check
+      run: |
+        set -o pipefail
+        ./helper.sh sast_check
     - name: "run SCA test (safety)"
       run: ./helper.sh sca_check
       env:

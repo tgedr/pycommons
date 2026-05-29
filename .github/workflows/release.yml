@@ -36,8 +36,8 @@ jobs:
       shell: bash
       run: |
           set -o pipefail
-          echo "## code quality (linter) check" >> $${{ env.REPORT_MD_FILE }}
-          ./helper.sh linter_check | tee -a $${{ env.REPORT_MD_FILE }}
+          echo "## code quality (linter) check" >> ${{ env.REPORT_MD_FILE }}
+          ./helper.sh linter_check | tee -a ${{ env.REPORT_MD_FILE }}
           exit ${PIPESTATUS[0]}
       env:
         BASHUTILS_DONT_UPDATE: "1"
@@ -45,8 +45,8 @@ jobs:
       shell: bash
       run: |
           set -o pipefail
-          echo "## code quality (sca - safety) check" >> $${{ env.REPORT_MD_FILE }}
-          ./helper.sh sca_check | tee -a $${{ env.REPORT_MD_FILE }}
+          echo "## code quality (sca - safety) check" >> ${{ env.REPORT_MD_FILE }}
+          ./helper.sh sca_check | tee -a ${{ env.REPORT_MD_FILE }}
           exit ${PIPESTATUS[0]}
       env:
         BASHUTILS_DONT_UPDATE: "1"
@@ -54,24 +54,24 @@ jobs:
     - name: "code quality (sast - bandit) check"
       run: |
         set -o pipefail
-        echo "## code quality (sast - bandit) check" >> $${{ env.REPORT_MD_FILE }}
-        ./helper.sh sast_check | tee -a $${{ env.REPORT_MD_FILE }}
+        echo "## code quality (sast - bandit) check" >> ${{ env.REPORT_MD_FILE }}
+        ./helper.sh sast_check | tee -a ${{ env.REPORT_MD_FILE }}
         exit ${PIPESTATUS[0]}
       env:
         BASHUTILS_DONT_UPDATE: "1"
     - name: unit tests
       run: |
         set -o pipefail
-        echo "## unit tests" >> $${{ env.REPORT_MD_FILE }}
-        ./helper.sh test | tee -a $${{ env.REPORT_MD_FILE }}
+        echo "## unit tests" >> ${{ env.REPORT_MD_FILE }}
+        ./helper.sh test | tee -a ${{ env.REPORT_MD_FILE }}
         exit ${PIPESTATUS[0]}
       env:
         BASHUTILS_DONT_UPDATE: "1"
     - name: unit test coverage
       run: |
         set -o pipefail
-        echo "## unit test coverage" >> $${{ env.REPORT_MD_FILE }}
-        ./helper.sh test_coverage_check $${{ env.TEST_COVERAGE_THRESHOLD }} | tee -a $${{ env.REPORT_MD_FILE }}
+        echo "## unit test coverage" >> ${{ env.REPORT_MD_FILE }}
+        ./helper.sh test_coverage_check ${{ env.TEST_COVERAGE_THRESHOLD }} | tee -a ${{ env.REPORT_MD_FILE }}
         exit ${PIPESTATUS[0]}
       env:
         BASHUTILS_DONT_UPDATE: "1"

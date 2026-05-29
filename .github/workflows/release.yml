@@ -97,6 +97,20 @@ jobs:
       with:
         name: ${{ env.RELEASE_DOCUMENTATION }} 
         path: ${{ env.RELEASE_DOCUMENTATION }} 
+    - name: remove artifact
+      shell: bash
+      run: rm -f ${{ env.RELEASE_DOCUMENTATION }}
+    - name: check files 1
+      shell: bash
+      run: ls -altr .
+    - name: fetch release documentation
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ env.RELEASE_DOCUMENTATION }} 
+    - name: check files 2
+      shell: bash
+      run: ls -altr .
+
 
   build-publish:
     needs: quality-assurance

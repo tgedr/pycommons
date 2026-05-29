@@ -35,4 +35,4 @@ jobs:
     - name: run unit tests
       run: ./helper.sh test
     - name: check coverage
-      run: ./helper.sh test_coverage_check $TEST_COVERAGE_THRESHOLD
+      run: ./helper.sh test_coverage_check ${{ env.TEST_COVERAGE_THRESHOLD }}

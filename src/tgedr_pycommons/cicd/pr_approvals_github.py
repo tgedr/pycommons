@@ -126,7 +126,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(description="GitHub PR approval export")
-    parser.add_argument("--repo", help="Repository to fetch PRs from, format: 'owner/repo'")
+    parser.add_argument("--repo", required=True, help="Repository to fetch PRs from, format: 'owner/repo'")
     parser.add_argument("--output", default="approvals.pdf", help="Output PDF filename")
     parser.add_argument("--branch", default="main", help="Branch to fetch PRs from")
     parser.add_argument("--maxprs", default="5000", help="Maximum number of PRs to fetch")

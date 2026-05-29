@@ -1,4 +1,4 @@
-name: pipeline
+name: quality assurance
 
 env:
   TEST_COVERAGE_THRESHOLD: 100
@@ -7,10 +7,9 @@ on:
   push:
     branches:
       - "*"
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+' 
+
 jobs:
-  build:
+  quality-assurance:
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
@@ -39,13 +38,3 @@ jobs:
       run: ./helper.sh test_coverage_check $TEST_COVERAGE_THRESHOLD
     - name: build
       run: ./helper.sh build
-    - name: publish
-      run: |
-        echo "Tag is ${{ github.ref }}"
-        if [[ ${{ github.ref }} =~ refs/tags/[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-          ./helper.sh publish
-        else
-          echo "invalid semver tag"
-        fi
-      env:
-        PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

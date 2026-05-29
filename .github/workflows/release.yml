@@ -2,6 +2,8 @@ name: release
 
 env:
   TEST_COVERAGE_THRESHOLD: 100
+  REPORT_MD_FILE: "quality_report.md"
+  RELEASE_DOCUMENTATION: "release_docs.tar.gz"
 
 on:
   push:
@@ -22,20 +24,78 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
     - name: install requirements
       run: ./helper.sh reqs
-    - name: "run SAST test (bandit)"
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: create report header
+      shell: bash
+      run: |
+          ./helper.sh report_header $REPORT_MD_FILE "${{ github.repository }}" "${{ github.ref }}" "${{ github.sha }}"
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: code quality (linter) check
+      shell: bash
+      run: |
+          set -o pipefail
+          echo "## code quality (linter) check" >> $REPORT_MD_FILE
+          ./helper.sh linter_check | tee -a $REPORT_MD_FILE
+          exit ${PIPESTATUS[0]}
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: code quality (sca - safety) check
+      shell: bash
+      run: |
+          set -o pipefail
+          echo "## code quality (sca - safety) check" >> $REPORT_MD_FILE
+          ./helper.sh sca_check | tee -a $REPORT_MD_FILE
+          exit ${PIPESTATUS[0]}
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+        SAFETY_KEY: ${{ secrets.SAFETY_KEY }} 
+    - name: "code quality (sast - bandit) check"
       run: |
         set -o pipefail
-        ./helper.sh sast_check
-    - name: "run SCA test (safety)"
-      run: ./helper.sh sca_check
+        echo "## code quality (sast - bandit) check" >> $REPORT_MD_FILE
+        ./helper.sh sast_check | tee -a $REPORT_MD_FILE
+        exit ${PIPESTATUS[0]}
       env:
-        SAFETY_KEY: ${{ secrets.SAFETY_KEY }} 
-    - name: check code linting
-      run: ./helper.sh linter_check  
-    - name: run unit tests
-      run: ./helper.sh test
-    - name: check coverage
-      run: ./helper.sh test_coverage_check $TEST_COVERAGE_THRESHOLD
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: unit tests
+      run: |
+        set -o pipefail
+        echo "## unit tests" >> $REPORT_MD_FILE
+        ./helper.sh test | tee -a $REPORT_MD_FILE
+        exit ${PIPESTATUS[0]}
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: unit test coverage
+      run: |
+        set -o pipefail
+        echo "## unit test coverage" >> $REPORT_MD_FILE
+        ./helper.sh test_coverage_check $TEST_COVERAGE_THRESHOLD | tee -a $REPORT_MD_FILE
+        exit ${PIPESTATUS[0]}
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: get pr approvals report
+      run: ./helper.sh get_pr_report
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: collect git folder
+      run: ./helper.sh collect_dot_git
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: create release report
+      run: ./helper.sh create_release_report
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: create release documentation
+      run: ./helper.sh create_release_documentation
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: Upload release documentation
+      uses: actions/upload-artifact@v4
+      with:
+        name: $RELEASE_DOCUMENTATION
+        path: $RELEASE_DOCUMENTATION
 
   build-publish:
     needs: quality-assurance
@@ -52,9 +112,19 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
     - name: install requirements
       run: ./helper.sh reqs
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: fetch release documentation
+      uses: actions/download-artifact@v4
+      with:
+        name: $RELEASE_DOCUMENTATION
+        path: $RELEASE_DOCUMENTATION
     - name: build
       run: ./helper.sh build
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
     - name: publish
       run: ./helper.sh publish
       env:
+        BASHUTILS_DONT_UPDATE: "1"
         PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}        

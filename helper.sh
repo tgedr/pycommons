@@ -82,7 +82,6 @@ download_bashutils_if_newer() {
   local actual_sha256
   local expected_sha256
 
-  
   if [ -f "$bashutils" ] && [ -f "$bashutils_last_check" ]; then
     now_epoch=$(date +%s)
     if last_check_epoch="$(get_file_mtime_epoch "$bashutils_last_check")"; then
@@ -175,7 +174,7 @@ source_if_exists "$this_folder/$FILE_LOCAL_VARIABLES"
 source_if_exists "$this_folder/$FILE_SECRETS"
 
 # ---------- include bashutils ----------
-download_bashutils_if_newer || exit 1
+[ -z "$BASHUTILS_DONT_UPDATE" ] && download_bashutils_if_newer
 . "$this_folder/$INCLUDE_FILE"
 
 # <=== HEADER SECTION END  <===
@@ -205,6 +204,9 @@ reqs(){
 }
 
 
+
+
+
 # <=== MAIN SECTION END  <===
 
 
@@ -224,7 +226,10 @@ usage() {
       - test_coverage_check <threshold>   checks coverage against a threshold
       - build                             builds the package
       - publish                           publishes the package
-      - tag                               tags last commit with the pyproject version and pushes it to the remote
+      - get_pr_report                     generates a PR approvals report
+      - collect_dot_git                   collects .git folder contents
+      - create_release_report             generates a release report in PDF format
+      - create_release_documentation      generates release documentation
 EOM
   exit 1
 }
@@ -261,7 +266,21 @@ case "$1" in
   tag)
     git_tag_and_push_auto_uv
     ;;
-
+  report_header)
+    pyproj_report_header "$2" "$3" "$4" "$5"
+    ;;
+  get_pr_report)
+    generate_pr_approvals_pdf "$REPO" "$BRANCH" "$PR_APPROVALS_PDF"
+    ;;
+  collect_dot_git)
+    collect_dot_git "$GIT_TAR"
+    ;;
+  create_release_report)
+    generate_quality_report_pdf "$REPORT_MD_FILE" "$RELEASE_REPORT_PDF"
+    ;;
+  create_release_documentation)
+    create_release_documentation "$GIT_TAR" "$PR_APPROVALS_PDF" "$RELEASE_REPORT_PDF" "$RELEASE_DOCUMENTATION_FOLDER"
+    ;;
   *)
     usage
     ;;

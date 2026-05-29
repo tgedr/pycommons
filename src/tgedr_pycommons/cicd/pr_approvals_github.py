@@ -5,6 +5,7 @@ repository using the GitHub CLI and generate a PDF report with approval details.
 
 Example:
     `uv run python scripts/pr_approvals_github.py --repo jtviegas/bashutils --branch master --output approvals.pdf`
+    `uv run python -c "from tgedr_pycommons.cicd.pr_approvals_github import generate_pr_approvals_pdf; generate_pr_approvals_pdf('jtviegas/bashutils', 'master', 'pr_approvals.pdf')"`
 """
 import json
 import subprocess # nosec B404
@@ -114,6 +115,11 @@ def generate_pdf(prs: list[dict[str, Any]], repo: str, filename: str = "approval
 
     c.save()
 
+def generate_pr_approvals_pdf(repo: str, branch: str, output: str, max_prs: int = 5000) -> None:
+    """Fetch merged PRs and generate approvals PDF."""
+    prs = get_completed_prs(repo, branch, max_prs)
+    if prs:
+        generate_pdf(prs, repo, output)
 
 def main() -> None:
     """Main function to process PRs and generate PDF."""

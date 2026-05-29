@@ -182,3 +182,11 @@ tests-results.xml
 CHANGELOG
 .vscode
 .bashutils.last_check
+git.tar.gz
+pr_approvals.pdf
+release_report.pdf
+quality_report.md
+quality_report.pdf
+report.md
+release_docs.tar.gz
+release_docs/

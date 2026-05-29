@@ -817,6 +817,54 @@ print_uuid(){
   echo "[print_uuid|out]"
 }
 
+
+
+collect_dot_git(){
+  info "[collect_dot_git|in] ($1)"
+  _pwd=`pwd`
+  cd "$this_folder"
+
+  local OUTPUT_FILE="${1:-git.tar.gz}"
+  tar czpvf "$OUTPUT_FILE" .git 
+  local result="$?"
+
+  cd "$_pwd"
+  local msg="[collect_dot_git|out] => ${result}"
+  [[ ! "$result" -eq "0" ]] && info "$msg" && exit 1
+  info "$msg"
+}
+
+create_release_documentation(){
+  info "[create_release_documentation|in] ($1, $2, $3, $4)"
+
+  local GIT_TAR="$1"
+  local PRS_PDF="$2"
+  local QA_PDF="$3"
+  local TARGET_DIR="$4"
+
+  if [ -z "$GIT_TAR" ] || [ -z "$PRS_PDF" ] || [ -z "$QA_PDF" ] || [ -z "$TARGET_DIR" ]; then
+    err "[create_release_documentation] missing required arguments: GIT_TAR, PRS_PDF, QA_PDF, TARGET_DIR" && exit 1
+  fi
+
+  _pwd=`pwd`
+  cd "$this_folder"
+
+  rm -f "$TARGET_DIR/*"
+  mkdir -p "$TARGET_DIR"
+  mv "$GIT_TAR" "$TARGET_DIR/"
+  mv "$PRS_PDF" "$TARGET_DIR/"
+  mv "$QA_PDF" "$TARGET_DIR/"
+
+  tar czpvf "${TARGET_DIR}.tar.gz" "$TARGET_DIR" 
+  local result="$?"
+  cd "$_pwd"
+
+  local msg="[create_release_documentation|out] => ${result}"
+  [[ ! "$result" -eq "0" ]] && info "$msg" && exit 1
+  info "$msg"
+}
+
+
 ##########################################
 #######     ------- cdk -------    #######
 ##########################################
@@ -1951,7 +1999,10 @@ poetry_publish_az(){
 }
 
 publish_pypi_uv(){
-  info "[publish_pypi_uv|in]"
+  info "[publish_pypi_uv|in] (${1:0:7})"
+
+  [ -z $1 ] && err "[publish_pypi_uv] missing argument PYPI_TOKEN" && exit 1
+  local PYPI_TOKEN="$1"
 
   _pwd=`pwd`
   cd "$this_folder"
@@ -2118,6 +2169,62 @@ poetry_publish_pip(){
   local msg="[poetry_publish_pip|out] => ${result}"
   [[ ! "$result" -eq "0" ]] && info "$msg" && exit 1
   info "$msg"
+}
+
+pyproj_report_header(){
+  info "[pyproj_report_header|in] ($1)"
+
+  [[ -z "$1" ]] && err "[pyproj_report_header] must provide DOCNAME" && exit 1
+  local DOCNAME="$1"
+
+  [[ -z "$2" ]] && err "[pyproj_report_header] must provide REPO" && exit 1
+  local REPO="$2"
+
+  [[ -z "$3" ]] && err "[pyproj_report_header] must provide BRANCH" && exit 1
+  local BRANCH="$3"
+
+  [[ -z "$4" ]] && err "[pyproj_report_header] must provide COMMIT" && exit 1
+  local COMMIT="$4"
+
+  _pwd=`pwd`
+  cd "$this_folder"
+
+  local version=$(uv run python -c "import tomllib; d=tomllib.load(open('pyproject.toml','rb')); print(d['project']['version'])")
+  local package=$(uv run python -c "import tomllib; d=tomllib.load(open('pyproject.toml','rb')); print(d['project']['name'])")
+
+  echo "## Test Report " > "${DOCNAME}"
+  echo "Package: ${package}" >> "$DOCNAME"
+  echo "Version: ${version}" >> "$DOCNAME"
+  echo "Timestamp: $(date)" >> "$DOCNAME"
+  echo "Repository: ${REPO}" >> "$DOCNAME"  
+  echo "Branch: ${BRANCH}" >> "$DOCNAME"
+  echo "Commit id: ${COMMIT}" >> "$DOCNAME"
+  
+  cd "$_pwd"
+  info "[pyproj_report_header|out]"
+}
+
+generate_pr_approvals_pdf() {
+  local repo="$1"
+  local branch="$2"
+  local output_file="$3"
+
+  if [ -z "$repo" ] || [ -z "$branch" ] || [ -z "$output_file" ]; then
+    err "[generate_pr_approvals_pdf] missing required arguments: repo, branch, output_file" && exit 1
+  fi
+
+  uv run python -c "from tgedr_pycommons.cicd.pr_approvals_github import generate_pr_approvals_pdf; generate_pr_approvals_pdf('$repo', '$branch', '$output_file')"
+}
+
+generate_quality_report_pdf() {
+  local input_md="$1"
+  local output_pdf="$2"
+
+  if [ -z "$input_md" ] || [ -z "$output_pdf" ]; then
+    err "[generate_quality_report_pdf] missing required arguments: input_md, output_pdf" && exit 1
+  fi
+
+  uv run python -c "from tgedr_pycommons.cicd.create_release_report import generate_report; generate_report('$input_md', '$output_pdf')"
 }
 
 ##########################################

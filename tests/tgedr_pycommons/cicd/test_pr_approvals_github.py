@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from tgedr_pycommons.cicd.pr_approvals_github import (
     generate_pdf,
+    generate_pr_approvals_pdf,
     get_approval_details,
     get_completed_prs,
     get_merge_commit_id,
@@ -205,4 +206,20 @@ def test_main_no_prs():  # noqa: ANN201, D103
         with patch("tgedr_pycommons.cicd.pr_approvals_github.get_completed_prs", return_value=[]):
             with patch("tgedr_pycommons.cicd.pr_approvals_github.generate_pdf") as mock_pdf:
                 main()
+    mock_pdf.assert_not_called()
+
+
+def test_generate_pr_approvals_pdf_with_prs():  # noqa: ANN201, D103
+    mock_prs = [{"number": 1, "title": "Test", "reviews": []}]
+    with patch("tgedr_pycommons.cicd.pr_approvals_github.get_completed_prs", return_value=mock_prs) as mock_get:
+        with patch("tgedr_pycommons.cicd.pr_approvals_github.generate_pdf") as mock_pdf:
+            generate_pr_approvals_pdf("owner/repo", "main", "out.pdf", max_prs=100)
+    mock_get.assert_called_once_with("owner/repo", "main", 100)
+    mock_pdf.assert_called_once_with(mock_prs, "owner/repo", "out.pdf")
+
+
+def test_generate_pr_approvals_pdf_no_prs():  # noqa: ANN201, D103
+    with patch("tgedr_pycommons.cicd.pr_approvals_github.get_completed_prs", return_value=[]):
+        with patch("tgedr_pycommons.cicd.pr_approvals_github.generate_pdf") as mock_pdf:
+            generate_pr_approvals_pdf("owner/repo", "main", "out.pdf")
     mock_pdf.assert_not_called()

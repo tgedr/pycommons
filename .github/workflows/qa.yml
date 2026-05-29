@@ -22,19 +22,17 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
     - name: install requirements
       run: ./helper.sh reqs
-    - name: "run SAST test (bandit)"
-      run: |
-        set -o pipefail
-        ./helper.sh sast_check
+    - name: check code linting
+      run: ./helper.sh linter_check 
     - name: "run SCA test (safety)"
       run: ./helper.sh sca_check
       env:
         SAFETY_KEY: ${{ secrets.SAFETY_KEY }} 
-    - name: check code linting
-      run: ./helper.sh linter_check  
+    - name: "run SAST test (bandit)"
+      run: |
+        set -o pipefail
+        ./helper.sh sast_check
     - name: run unit tests
       run: ./helper.sh test
     - name: check coverage
       run: ./helper.sh test_coverage_check $TEST_COVERAGE_THRESHOLD
-    - name: build
-      run: ./helper.sh build

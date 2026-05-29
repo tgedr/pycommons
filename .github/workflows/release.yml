@@ -119,7 +119,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: ${{ env.RELEASE_DOCUMENTATION }} 
-        path: ${{ github.workspace }}
+        path: .
     - name: build
       run: ./helper.sh build
       env:

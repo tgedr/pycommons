@@ -1,0 +1,131 @@
+name: release
+
+env:
+  TEST_COVERAGE_THRESHOLD: 100
+  REPORT_MD_FILE: "quality_report.md"
+  RELEASE_DOCUMENTATION: "release_docs.tar.gz"
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  quality-assurance:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: '0'
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: 'install uv'
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+    - name: install requirements
+      run: ./helper.sh reqs
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: create report header
+      shell: bash
+      run: |
+          ./helper.sh report_header ${{ env.REPORT_MD_FILE }} "${{ github.repository }}" "${{ github.ref }}" "${{ github.sha }}"
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: code quality (linter) check
+      shell: bash
+      run: |
+          set -o pipefail
+          echo "## code quality (linter) check" >> $${{ env.REPORT_MD_FILE }}
+          ./helper.sh linter_check | tee -a $${{ env.REPORT_MD_FILE }}
+          exit ${PIPESTATUS[0]}
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: code quality (sca - safety) check
+      shell: bash
+      run: |
+          set -o pipefail
+          echo "## code quality (sca - safety) check" >> $${{ env.REPORT_MD_FILE }}
+          ./helper.sh sca_check | tee -a $${{ env.REPORT_MD_FILE }}
+          exit ${PIPESTATUS[0]}
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+        SAFETY_KEY: ${{ secrets.SAFETY_KEY }} 
+    - name: "code quality (sast - bandit) check"
+      run: |
+        set -o pipefail
+        echo "## code quality (sast - bandit) check" >> $${{ env.REPORT_MD_FILE }}
+        ./helper.sh sast_check | tee -a $${{ env.REPORT_MD_FILE }}
+        exit ${PIPESTATUS[0]}
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: unit tests
+      run: |
+        set -o pipefail
+        echo "## unit tests" >> $${{ env.REPORT_MD_FILE }}
+        ./helper.sh test | tee -a $${{ env.REPORT_MD_FILE }}
+        exit ${PIPESTATUS[0]}
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: unit test coverage
+      run: |
+        set -o pipefail
+        echo "## unit test coverage" >> $${{ env.REPORT_MD_FILE }}
+        ./helper.sh test_coverage_check $${{ env.TEST_COVERAGE_THRESHOLD }} | tee -a $${{ env.REPORT_MD_FILE }}
+        exit ${PIPESTATUS[0]}
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: get pr approvals report
+      run: ./helper.sh get_pr_report
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+    - name: collect git folder
+      run: ./helper.sh collect_dot_git
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: create release report
+      run: ./helper.sh create_release_report
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: create release documentation
+      run: ./helper.sh create_release_documentation
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: Upload release documentation
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.RELEASE_DOCUMENTATION }} 
+        path: ${{ env.RELEASE_DOCUMENTATION }} 
+
+  build-publish:
+    needs: quality-assurance
+    runs-on: ubuntu-24.04
+    environment: prd
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: '0'
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: 'install uv'
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+    - name: install requirements
+      run: ./helper.sh reqs
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: fetch release documentation
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ env.RELEASE_DOCUMENTATION }} 
+        path: ${{ env.RELEASE_DOCUMENTATION }} 
+    - name: build
+      run: ./helper.sh build
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+    - name: publish
+      run: ./helper.sh publish
+      env:
+        BASHUTILS_DONT_UPDATE: "1"
+        PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}        

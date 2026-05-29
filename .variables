@@ -4,3 +4,10 @@
 # both files, `.local_variables` and `.secrets`, are ignored by git and are loaded up by the `helper.sh` script
 
 export PYPI_USER="__token__"
+export REPO="tgedr/pycommons"
+export BRANCH="main"
+export PR_APPROVALS_PDF="pr_approvals.pdf"
+export RELEASE_DOCUMENTATION_FOLDER="release_docs"
+export GIT_TAR="git.tar.gz"
+export REPORT_MD_FILE="quality_report.md"
+export RELEASE_REPORT_PDF="release_report.pdf"

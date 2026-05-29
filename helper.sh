@@ -34,33 +34,148 @@ err(){
 }
 
 
+source_if_exists() {
+  local file="$1"
+  if [ ! -f "$file" ]; then
+    warn "we DON'T have a $(basename "$file") file - creating it"
+    touch "$file"
+    chmod 600 "$file"
+  else
+    . "$file"
+  fi
+}
+
 # ---------- CONSTANTS ----------
 export FILE_VARIABLES=${FILE_VARIABLES:-".variables"}
 export FILE_LOCAL_VARIABLES=${FILE_LOCAL_VARIABLES:-".local_variables"}
 export FILE_SECRETS=${FILE_SECRETS:-".secrets"}
+export INCLUDE_FILE=${INCLUDE_FILE:-".bashutils"}
+export BASHUTILS_URL=${BASHUTILS_URL:-"https://api.github.com/repos/jtviegas/bashutils/contents/.bashutils"}
+export BASHUTILS_CHECKSUM_URL=${BASHUTILS_CHECKSUM_URL:-"https://api.github.com/repos/jtviegas/bashutils/contents/.bashutils.checksum"}
+export BASHUTILS_CHECK_INTERVAL_SECONDS=${BASHUTILS_CHECK_INTERVAL_SECONDS:-"86400"}
+
+get_file_mtime_epoch() {
+  local file="$1"
+  local mtime
+  mtime="$(stat -c %Y "$file" 2>/dev/null)" && {
+    echo "$mtime"
+    return 0
+  }
+  mtime="$(stat -f %m "$file" 2>/dev/null)" && {
+    echo "$mtime"
+    return 0
+  }
+  return 1
+}
+
+download_bashutils_if_newer() {
+  local bashutils="$this_folder/$INCLUDE_FILE"
+  local bashutils_last_check="$this_folder/${INCLUDE_FILE}.last_check"
+  local bashutils_checksum="$this_folder/${INCLUDE_FILE}.checksum"
+  local just_fetch="0"
+  local now_epoch
+  local last_check_epoch
+  local elapsed
+  local did_remote_check=0
+  local bashutils_tmp
+  local checksum_tmp
+  local actual_sha256
+  local expected_sha256
+
+  if [ -f "$bashutils" ] && [ -f "$bashutils_last_check" ]; then
+    now_epoch=$(date +%s)
+    if last_check_epoch="$(get_file_mtime_epoch "$bashutils_last_check")"; then
+      case "$last_check_epoch" in
+        ''|*[!0-9]*)
+          warn "[download_bashutils_if_newer] invalid last check marker timestamp, forcing a remote check"
+          ;;
+        *)
+          elapsed=$((now_epoch - last_check_epoch))
+          if [ "$elapsed" -lt "$BASHUTILS_CHECK_INTERVAL_SECONDS" ]; then
+            info "[download_bashutils_if_newer] no need to update $INCLUDE_FILE (last checked $elapsed seconds ago)"
+            return 0
+          fi
+          ;;
+      esac
+    fi
+  else
+    info "[download_bashutils_if_newer] no $INCLUDE_FILE or ${INCLUDE_FILE}.last_check found - we will fetch it"
+    just_fetch="1"
+  fi
+
+  if ! command -v curl >/dev/null 2>&1; then
+    err "[download_bashutils_if_newer] please install curl"
+    return 1
+  fi
+
+  if ! command -v sha256sum >/dev/null 2>&1; then
+    err "[download_bashutils_if_newer] please install sha256sum to verify $INCLUDE_FILE"
+    return 1
+  fi
+
+  checksum_tmp="$(mktemp)"
+  if ! curl -fsSL "$BASHUTILS_CHECKSUM_URL" \
+    | python3 -c "import sys,json,base64; sys.stdout.buffer.write(base64.b64decode(json.load(sys.stdin)['content']))" \
+    > "$checksum_tmp"; then
+    err "[download_bashutils_if_newer] failed to download $(basename "$BASHUTILS_CHECKSUM_URL")"
+    rm -f "$checksum_tmp"
+    return 1
+  fi
+  expected_sha256=$(cat "$checksum_tmp" | awk '{print $1}')
+  info "[download_bashutils_if_newer] expected_sha256: $expected_sha256"
+  rm -f "$checksum_tmp"
+
+  if [ "$just_fetch" -ne "1" ]; then
+      info "[download_bashutils_if_newer] checking existing $INCLUDE_FILE"
+
+      actual_sha256=$(cat "$bashutils_checksum" | awk '{print $1}')
+      info "[download_bashutils_if_newer] actual_sha256: $actual_sha256"
+      
+      if [ "$actual_sha256" != "$expected_sha256" ]; then
+        info "[download_bashutils_if_newer] $INCLUDE_FILE is outdated (actual: $actual_sha256, expected: $expected_sha256), updating it"
+        just_fetch="1"
+      else
+        info "[download_bashutils_if_newer] $INCLUDE_FILE is up to date"
+      fi
+  fi
+
+
+  if [ "$just_fetch" -eq "1" ]; then
+    bashutils_tmp="$(mktemp)"
+    curl -fsSL "$BASHUTILS_URL" \
+      | python3 -c "import sys,json,base64; sys.stdout.buffer.write(base64.b64decode(json.load(sys.stdin)['content']))" \
+      > "$bashutils_tmp"
+    if [ ! "$?" -eq "0" ]; then
+      err "[download_bashutils_if_newer] failed to download $INCLUDE_FILE"
+      rm -f "$bashutils_tmp"
+      return 1
+    fi
+    info "[download_bashutils_if_newer] downloaded $INCLUDE_FILE to $bashutils_tmp"
+    actual_sha256="$(sha256sum "$bashutils_tmp" | awk '{print $1}')"
+    info "[download_bashutils_if_newer] actual_sha256: $actual_sha256"
+
+    if [ "$actual_sha256" != "$expected_sha256" ]; then
+      info "[download_bashutils_if_newer] $INCLUDE_FILE checksum is not equal to the expected one (actual: $actual_sha256, expected: $expected_sha256), aborting update"
+      return 1
+    fi
+
+    mv "$bashutils_tmp" "$bashutils"
+    rm -f "$bashutils_tmp"
+    touch "$bashutils_last_check" || warn "[download_bashutils_if_newer] failed to update last check marker; next run will perform a remote check"
+    info "[download_bashutils_if_newer] updated $INCLUDE_FILE or ${INCLUDE_FILE}.last_check "
+  fi
+
+}
 
 # -------------------------------
 # --- source variables files
-if [ ! -f "$this_folder/$FILE_VARIABLES" ]; then
-  warn "we DON'T have a $FILE_VARIABLES variables file - creating it"
-  touch "$this_folder/$FILE_VARIABLES"
-else
-  . "$this_folder/$FILE_VARIABLES"
-fi
+source_if_exists "$this_folder/$FILE_VARIABLES"
+source_if_exists "$this_folder/$FILE_LOCAL_VARIABLES"
+source_if_exists "$this_folder/$FILE_SECRETS"
 
-if [ ! -f "$this_folder/$FILE_LOCAL_VARIABLES" ]; then
-  warn "we DON'T have a $FILE_LOCAL_VARIABLES variables file - creating it"
-  touch "$this_folder/$FILE_LOCAL_VARIABLES"
-else
-  . "$this_folder/$FILE_LOCAL_VARIABLES"
-fi
-
-if [ ! -f "$this_folder/$FILE_SECRETS" ]; then
-  warn "we DON'T have a $FILE_SECRETS secrets file - creating it"
-  touch "$this_folder/$FILE_SECRETS"
-else
-  . "$this_folder/$FILE_SECRETS"
-fi
+# ---------- include bashutils ----------
+[ -z "$BASHUTILS_DONT_UPDATE" ] && download_bashutils_if_newer
+. "$this_folder/$INCLUDE_FILE"
 
 # <=== HEADER SECTION END  <===
 
@@ -88,190 +203,9 @@ reqs(){
   info "$msg"
 }
 
-unit_test(){
-  info "[unit_test|in] ($1)"
 
-  local FOLDER=$TEST_DIR
-  [[ ! -z "$1" ]] && FOLDER="$1"
 
-  _pwd=`pwd`
-  cd "$this_folder"
 
-  uv run pytest "$FOLDER" -x -s -vv --durations=0 \
-    --cov="$SRC_DIR" \
-    --cov-report=term-missing \
-    --cov-report=html \
-    --cov-report=xml \
-    --junitxml=unit-tests-results.xml
-  local result="$?"
-  [[ ! "$result" -eq "0" ]] && err "[unit_test] tests failed"
-  cd "$_pwd"
-
-  local msg="[unit_test|out] => ${result}"
-  [[ ! "$result" -eq "0" ]] && info "$msg" && exit 1
-  info "$msg"
-}
-
-unit_test_print_coverage()
-{
-  info "[unit_test_print_coverage|in]"
-  
-  uv run coverage report --show-missing
-  uv run coverage html
-  uv run coverage xml
-  result="$?"
-  [ "$result" -ne "0" ] && exit 1
-  info "[unit_test_print_coverage|out] => $result"
-  return ${result}
-}
-
-unit_test_coverage_check()
-{
-  info "[unit_test_coverage_check|in] ($1)"
-  [ -z "$1" ] && usage
-
-  local threshold=$1
-  score=$(uv run coverage report | awk '$1 == "TOTAL" {print $NF+0}')
-  result="$?"
-  [ "$result" -ne "0" ] && exit 1
-  if (( $threshold > $score )); then
-    err "[unit_test_coverage_check] $score doesn't meet $threshold"
-    exit 1
-  fi
-  uv run genbadge coverage -i coverage.xml -o coverage.svg
-  info "[unit_test_coverage_check|out] => $score"
-}
-
-build(){
-  info "[build|in]"
-
-  _pwd=`pwd`
-  cd "$this_folder"
-  # changelog
-  rm -rf dist/*
-  uv build
-  local result="$?"
-  [[ ! "$result" -eq "0" ]] && err "[build] build failed"
-
-  cd "$_pwd"
-  local msg="[build|out] => ${result}"
-  [[ ! "$result" -eq "0" ]] && info "$msg" && exit 1
-  info "$msg"
-}
-
-publish(){
-  info "[publish|in]"
-
-  _pwd=`pwd`
-  cd "$this_folder"
-
-  uv publish --token "$PYPI_TOKEN"
-  local result="$?"
-  [[ ! "$result" -eq "0" ]] && err "[publish] publish failed"
-
-  cd "$_pwd"
-  local msg="[publish|out] => ${result}"
-  [[ ! "$result" -eq "0" ]] && info "$msg" && exit 1
-  info "$msg"
-}
-
-sca_check_safety(){
-  info "[sca_check_safety|in] (${1:0:3})"
-  _pwd=`pwd`
-
-  [ -z $1 ] && err "[sca_check_safety] missing argument SAFETY_KEY" && exit 1
-  local SAFETY_KEY="$1"
-
-  local result=0
-  cd "$this_folder"
-
-  # Run safety scan with continue-on-error flag
-  uv run safety --key "$SAFETY_KEY" scan --detailed-output --continue-on-error || true
-  actual_result="$?"
-  info "[sca_check_safety] actual exit code: $actual_result"
-  
-  # Exit codes: 0=success, 64=vulnerabilities found, 68=policy violation
-  if [ "$actual_result" -eq "64" ] || [ "$actual_result" -eq "68" ]; then
-    warn "[sca_check_safety] vulnerabilities or policy violations found (exit code: $actual_result)"
-    result=0  # Don't fail CI on vulnerabilities for now
-  elif [ "$actual_result" -ne "0" ]; then
-    warn "[sca_check_safety] scan failed with exit code: $actual_result"
-    result=0  # Don't fail CI
-  else
-    result=0
-  fi
-  
-  info "[sca_check_safety] scan completed with exit code: $actual_result (treating as: $result)"
-  cd "$_pwd"
-
-  local msg="[sca_check_safety|out] => ${result}"
-  [[ ! "$result" -eq "0" ]] && info "$msg" && exit 1
-  info "$msg"
-}
-
-sast_check_bandit(){
-  info "[sast_check_bandit|in] ($1)"
-  _pwd=`pwd`
-
-  [ -z $1 ] && err "[sast_check_bandit] missing argument SRC_DIR" && exit 1
-  local SRC_DIR="$1"
-
-  cd "$this_folder"
-
-  uv run bandit -r $SRC_DIR
-  local result="$?"
-  if [ ! "$result" -eq "0" ] ; then err "[sast_check_bandit] code check had issues"; fi
-
-  cd "$_pwd"
-
-  local msg="[sast_check_bandit|out] => ${result}"
-  [[ ! "$result" -eq "0" ]] && info "$msg" && exit 1
-  info "$msg"
-}
-
-lint_check_ruff(){
-  info "[lint_check_ruff|in]"
-  _pwd=`pwd`
-
-  cd "$this_folder"
-
-  uv run ruff check
-  local result="$?"
-  if [ ! "$result" -eq "0" ] ; then err "[lint_check_ruff] ruff linter check had issues"; fi
-
-  cd "$_pwd"
-
-  local msg="[lint_check_ruff|out] => ${result}"
-  [[ ! "$result" -eq "0" ]] && info "$msg" && exit 1
-  info "$msg"
-}
-
-git_tag_and_push()
-{
-  info "[git_tag_and_push|in] ($1, ${2:0:7})"
-
-  [ -z "$1" ] && err "must provide parameter VERSION" && exit 1
-  local VERSION="$1"
-  [ -z "$2" ] && err "must provide parameter COMMIT_HASH" && exit 1
-  local COMMIT_HASH="$2"
-
-  git tag -a "$VERSION" "$COMMIT_HASH" -m "release $VERSION" && git push --tags
-  result="$?"
-  [ "$result" -ne "0" ] && err "[git_tag_and_push|out] could not tag and push" && exit 1
-
-  info "[git_tag_and_push|out] => ${result}"
-}
-
-get_latest_tag() {
-  info "[get_latest_tag|in]"
-  git fetch --tags > /dev/null 2>&1
-  latest_tag=$(git describe --tags --abbrev=0 2>/dev/null)
-  local result=0
-  if [ ! -z "$latest_tag" ]; then
-      result="$latest_tag"
-  fi
-  info "[get_latest_tag|out] => ${result}"
-}
 
 # <=== MAIN SECTION END  <===
 
@@ -292,8 +226,10 @@ usage() {
       - test_coverage_check <threshold>   checks coverage against a threshold
       - build                             builds the package
       - publish                           publishes the package
-      - tag <VERSION> <COMMIT_HASH>       tags a specific commit with the version and pushes it to the remote
-      - get_latest_tag
+      - get_pr_report                     generates a PR approvals report
+      - collect_dot_git                   collects .git folder contents
+      - create_release_report             generates a release report in PDF format
+      - create_release_documentation      generates release documentation
 EOM
   exit 1
 }
@@ -304,34 +240,46 @@ case "$1" in
     reqs
     ;;
   linter_check)
-    lint_check_ruff
+    lint_check_ruff_uv
     ;;
   sast_check)
-    sast_check_bandit "$this_folder/src"
+    sast_check_bandit_uv "$SRC_DIR"
     ;;
   sca_check)
-    sca_check_safety "$SAFETY_KEY"
+    sca_check_safety_uv "$SAFETY_KEY"
     ;;
   test)
-    unit_test "$2"
+    pytest_uv "$TEST_DIR"
     ;;
   test_coverage)
-    unit_test_print_coverage
+    test_print_coverage_uv
     ;;
   test_coverage_check)
-    unit_test_coverage_check "$2"
+    test_coverage_check_uv "$2"
     ;;
   build)
-    build
+    build_uv
     ;;
   publish)
-    publish
+    publish_pypi_uv "$PYPI_TOKEN"
     ;;
   tag)
-    git_tag_and_push "$2" "$3"
+    git_tag_and_push_auto_uv
     ;;
-  get_latest_tag)
-    get_latest_tag
+  report_header)
+    pyproj_report_header "$2" "$3" "$4" "$5"
+    ;;
+  get_pr_report)
+    generate_pr_approvals_pdf "$REPO" "$BRANCH" "$PR_APPROVALS_PDF"
+    ;;
+  collect_dot_git)
+    collect_dot_git "$GIT_TAR"
+    ;;
+  create_release_report)
+    generate_quality_report_pdf "$REPORT_MD_FILE" "$RELEASE_REPORT_PDF"
+    ;;
+  create_release_documentation)
+    create_release_documentation "$GIT_TAR" "$PR_APPROVALS_PDF" "$RELEASE_REPORT_PDF" "$RELEASE_DOCUMENTATION_FOLDER"
     ;;
   *)
     usage

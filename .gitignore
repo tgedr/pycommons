@@ -190,3 +190,6 @@ quality_report.pdf
 report.md
 release_docs.tar.gz
 release_docs/
+.assorted/
+pr_approvals.md
+output.pdf

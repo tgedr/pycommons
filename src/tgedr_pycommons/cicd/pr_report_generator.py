@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import json
 import subprocess # nosec B404
-from typing import Any
+from typing import Any, ClassVar
 import argparse
 from pathlib import Path
 import logging
@@ -164,7 +164,7 @@ class PrReportGenerator(ABC):
     using the specified strategy.
     """
 
-    __DEFAULT_REVIEW_STATES_FILTER: list[str] = ["APPROVED", "CHANGES_REQUESTED", "DISMISSED"]
+    __DEFAULT_REVIEW_STATES_FILTER: ClassVar[list[str]] = ["APPROVED", "CHANGES_REQUESTED", "DISMISSED"]
 
     def __init__(self, repo: str, branch: str, max_prs: int = 5000, strategy: str|None = None, review_states_filter: list[str]|None = None) -> None:
         """Initialize the PR info fetcher.

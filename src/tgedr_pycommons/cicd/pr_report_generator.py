@@ -166,7 +166,14 @@ class PrReportGenerator(ABC):
 
     __DEFAULT_REVIEW_STATES_FILTER: ClassVar[list[str]] = ["APPROVED", "CHANGES_REQUESTED", "DISMISSED"]
 
-    def __init__(self, repo: str, branch: str, max_prs: int = 5000, strategy: str|None = None, review_states_filter: list[str]|None = None) -> None:
+    def __init__(
+        self,
+        repo: str,
+        branch: str,
+        max_prs: int = 5000,
+        strategy: str | None = None,
+        review_states_filter: list[str] | None = None,
+    ) -> None:
         """Initialize the PR info fetcher.
 
         Args:

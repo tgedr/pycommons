@@ -240,7 +240,7 @@ def generate_pr_approvals_md(repo: str, branch: str, output: str, max_prs: int =
     """Fetch merged PRs and generate approvals Markdown."""
     generator = GitHubPrReportGenerator(repo, branch, max_prs)
     report_rows: list[str] = generator.get_pr_report()
-    with Path(output).open("w") as f:
+    with Path(output).open("w", encoding="utf-8") as f:
         f.writelines(line + "\n" for line in report_rows)
 
 

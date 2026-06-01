@@ -119,7 +119,7 @@ class PrReportGeneratorStrategy(ABC):
         """
 
     @staticmethod
-    def get_instance(name: str|None) -> "PrReportGeneratorStrategy":  # noqa: ARG004
+    def get_instance(name: str | None) -> "PrReportGeneratorStrategy":  # noqa: ARG004
         """Get an instance of the default PR report generator strategy."""
         return DefaultPrReportGeneratorStrategy()
 

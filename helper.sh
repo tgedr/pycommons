@@ -210,17 +210,24 @@ function_report_wrapper(){
   [ -z "$1" ] && { err "[function_report_wrapper] missing report section name argument"; return 1; }
   local section_name="$1"
   shift
-  
+  [ "$#" -lt 1 ] && { err "[function_report_wrapper] missing command to run"; return 1; }
+
   {
     echo
     echo "## $section_name - section start"
     echo
     "$@"
+    cmd_rc=$?
     echo
     echo "## $section_name - section end"
     echo
-  } | tee "$report_path"
-  return ${PIPESTATUS[0]}
+    exit "$cmd_rc"
+  } | tee -a "$report_path"
+
+  local cmd_rc=${PIPESTATUS[0]}
+  local tee_rc=${PIPESTATUS[1]}
+  [ "$cmd_rc" -ne 0 ] && return "$cmd_rc"
+  return "$tee_rc"
 }
 
 generate_pr_approvals_md() {

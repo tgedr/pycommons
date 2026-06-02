@@ -174,7 +174,8 @@ source_if_exists "$this_folder/$FILE_LOCAL_VARIABLES"
 source_if_exists "$this_folder/$FILE_SECRETS"
 
 # ---------- include bashutils ----------
-[ -z "$BASHUTILS_DONT_UPDATE" ] && download_bashutils_if_newer
+BASHUTILS_UPDATE=${BASHUTILS_UPDATE:-"0"}
+[ "$BASHUTILS_UPDATE" -eq "1" ] && download_bashutils_if_newer
 . "$this_folder/$INCLUDE_FILE"
 
 # <=== HEADER SECTION END  <===
@@ -202,59 +203,6 @@ reqs(){
   [[ ! "$result" -eq "0" ]] && info "$msg" && exit 1
   info "$msg"
 }
-
-function_report_wrapper(){
-  [ -z "$1" ] && { err "[function_report_wrapper] missing report path argument"; return 1; }
-  local report_path="$1"
-  shift
-  [ -z "$1" ] && { err "[function_report_wrapper] missing report section name argument"; return 1; }
-  local section_name="$1"
-  shift
-  [ "$#" -lt 1 ] && { err "[function_report_wrapper] missing command to run"; return 1; }
-
-  {
-    echo "## $section_name - section start"
-    echo
-    "$@"
-    local cmd_rc=$?
-    echo
-    echo "## $section_name - section end"
-    echo
-    exit "$cmd_rc"
-  } | tee -a "$report_path"
-
-  local result=${PIPESTATUS[0]}
-  return "$result"
-}
-
-generate_pr_approvals_md() {
-  local repo="$1"
-  local branch="$2"
-  local output_file="$3"
-
-  if [ -z "$repo" ] || [ -z "$branch" ] || [ -z "$output_file" ]; then
-    err "[generate_pr_approvals_md] missing required arguments: repo, branch, output_file" && exit 1
-  fi
-
-  uv run python -c "from tgedr_pycommons.cicd.pr_report_generator import generate_pr_approvals_md; generate_pr_approvals_md('$repo', '$branch', '$output_file')"
-}
-
-
-generate_pdf_from_md() {
-
-  [ -z "$1" ] && { err "[generate_pdf_from_md] missing input_md argument"; return 1; }
-  local input_md="$1"
-  [ -z "$2" ] && { err "[generate_pdf_from_md] missing output_pdf argument"; return 1; }
-  local output_pdf="$2"
-
-  uv run python -c "from tgedr_pycommons.cicd.markdown_to_pdf import convert; convert('$input_md', '$output_pdf')"
-}
-
-
-
-
-
-
 
 # <=== MAIN SECTION END  <===
 

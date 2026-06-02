@@ -52,6 +52,7 @@ jobs:
       run: |
         ./helper.sh generate_pr_approvals "${{ env.PR_APPROVALS_FILENAME }}.md" && \
         ./helper.sh generate_pdf_from_md "${{ env.PR_APPROVALS_FILENAME }}.md" "${{ env.PR_APPROVALS_FILENAME }}.pdf"
+      env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
     - name: collect git folder
       run: ./helper.sh collect_dot_git
@@ -78,18 +79,13 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
     - name: install requirements
       run: ./helper.sh reqs
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: fetch release documentation
       uses: actions/download-artifact@v4
       with:
         name: ${{ env.RELEASE_DOCUMENTATION }} 
     - name: build
       run: ./helper.sh build
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: publish
       run: ./helper.sh publish
       env:
-        BASHUTILS_DONT_UPDATE: "1"
         PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}        

@@ -213,21 +213,18 @@ function_report_wrapper(){
   [ "$#" -lt 1 ] && { err "[function_report_wrapper] missing command to run"; return 1; }
 
   {
-    echo
     echo "## $section_name - section start"
     echo
     "$@"
-    cmd_rc=$?
+    local cmd_rc=$?
     echo
     echo "## $section_name - section end"
     echo
     exit "$cmd_rc"
   } | tee -a "$report_path"
 
-  local cmd_rc=${PIPESTATUS[0]}
-  local tee_rc=${PIPESTATUS[1]}
-  [ "$cmd_rc" -ne 0 ] && return "$cmd_rc"
-  return "$tee_rc"
+  local result=${PIPESTATUS[0]}
+  return "$result"
 }
 
 generate_pr_approvals_md() {
@@ -286,8 +283,6 @@ usage() {
       - generate_pr_approvals                 generates a markdown report with PR approvals for the specified repo and branch
       - generate_pdf_from_md <input_md> 
                               <output_pdf>    generates a PDF from a markdown file
-
-      - create_release_report             generates a release report in PDF format
       - create_release_documentation      generates release documentation
       
 EOM

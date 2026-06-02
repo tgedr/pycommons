@@ -203,6 +203,55 @@ reqs(){
   info "$msg"
 }
 
+function_report_wrapper(){
+  [ -z "$1" ] && { err "[function_report_wrapper] missing report path argument"; return 1; }
+  local report_path="$1"
+  shift
+  [ -z "$1" ] && { err "[function_report_wrapper] missing report section name argument"; return 1; }
+  local section_name="$1"
+  shift
+  [ "$#" -lt 1 ] && { err "[function_report_wrapper] missing command to run"; return 1; }
+
+  {
+    echo "## $section_name - section start"
+    echo
+    "$@"
+    local cmd_rc=$?
+    echo
+    echo "## $section_name - section end"
+    echo
+    exit "$cmd_rc"
+  } | tee -a "$report_path"
+
+  local result=${PIPESTATUS[0]}
+  return "$result"
+}
+
+generate_pr_approvals_md() {
+  local repo="$1"
+  local branch="$2"
+  local output_file="$3"
+
+  if [ -z "$repo" ] || [ -z "$branch" ] || [ -z "$output_file" ]; then
+    err "[generate_pr_approvals_md] missing required arguments: repo, branch, output_file" && exit 1
+  fi
+
+  uv run python -c "from tgedr_pycommons.cicd.pr_report_generator import generate_pr_approvals_md; generate_pr_approvals_md('$repo', '$branch', '$output_file')"
+}
+
+
+generate_pdf_from_md() {
+
+  [ -z "$1" ] && { err "[generate_pdf_from_md] missing input_md argument"; return 1; }
+  local input_md="$1"
+  [ -z "$2" ] && { err "[generate_pdf_from_md] missing output_pdf argument"; return 1; }
+  local output_pdf="$2"
+
+  uv run python -c "from tgedr_pycommons.cicd.markdown_to_pdf import convert; convert('$input_md', '$output_pdf')"
+}
+
+
+
 
 
 
@@ -217,19 +266,25 @@ usage() {
   usage:
   $(basename $0) { option }
     options:
-      - reqs                              installs development requirements
-      - linter_check                      runs code lint and format check
-      - sast_check                        runs static application security tests (SAST) check
-      - sca_check                         runs software component analysis (SCA) check
-      - test [<test_folder>]              runs unit tests
-      - test_coverage                     prints test coverage report
-      - test_coverage_check <threshold>   checks coverage against a threshold
-      - build                             builds the package
-      - publish                           publishes the package
-      - get_pr_report                     generates a PR approvals report
-      - collect_dot_git                   collects .git folder contents
-      - create_release_report             generates a release report in PDF format
+      - reqs                                  installs development requirements
+      - linter_check                          runs code lint and format check
+      - sast_check                            runs static application security tests (SAST) check
+      - sca_check                             runs software component analysis (SCA) check
+      - test [<test_folder>]                  runs unit tests
+      - test_coverage                         prints test coverage report
+      - test_coverage_check <threshold>       checks coverage against a threshold
+      - build                                 builds the package
+      - publish                               publishes the package
+      - collect_dot_git                       collects .git folder contents
+      - function_report_wrapper 
+              <report_path> <section_name> 
+              <command...>                    runs a command and wraps its output in a report section with the given name, 
+                                              appending it to the specified report path
+      - generate_pr_approvals                 generates a markdown report with PR approvals for the specified repo and branch
+      - generate_pdf_from_md <input_md> 
+                              <output_pdf>    generates a PDF from a markdown file
       - create_release_documentation      generates release documentation
+      
 EOM
   exit 1
 }
@@ -269,17 +324,20 @@ case "$1" in
   report_header)
     pyproj_report_header "$2" "$3" "$4" "$5"
     ;;
-  get_pr_report)
-    generate_pr_approvals_pdf "$REPO" "$BRANCH" "$PR_APPROVALS_PDF"
+  function_report_wrapper)
+    function_report_wrapper "$2" "$3" "${@:4}"
+    ;;
+  generate_pr_approvals)
+    generate_pr_approvals_md "$REPO" "$BRANCH" "$2"
+    ;;
+  generate_pdf_from_md)
+    generate_pdf_from_md "$2" "$3"
     ;;
   collect_dot_git)
     collect_dot_git "$GIT_TAR"
     ;;
-  create_release_report)
-    generate_quality_report_pdf "$REPORT_MD_FILE" "$RELEASE_REPORT_PDF"
-    ;;
   create_release_documentation)
-    create_release_documentation "$GIT_TAR" "$PR_APPROVALS_PDF" "$RELEASE_REPORT_PDF" "$RELEASE_DOCUMENTATION_FOLDER"
+    create_release_documentation "$GIT_TAR" "$2" "$3" "$RELEASE_DOCUMENTATION_FOLDER"
     ;;
   *)
     usage

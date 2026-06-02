@@ -6,7 +6,6 @@
 export PYPI_USER="__token__"
 export REPO="tgedr/pycommons"
 export BRANCH="main"
-export PR_APPROVALS_PDF="pr_approvals.pdf"
 export RELEASE_DOCUMENTATION_FOLDER="release_docs"
 export GIT_TAR="git.tar.gz"
 export REPORT_MD_FILE="quality_report.md"

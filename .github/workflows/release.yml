@@ -25,59 +25,39 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
     - name: install requirements
       run: ./helper.sh reqs
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: create report header
       shell: bash
       run: ./helper.sh report_header "${{ env.RELEASE_REPORT_FILENAME }}.md" "${{ github.repository }}" "${{ github.ref }}" "${{ github.sha }}"
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: code quality (linter) check
       shell: bash
       run: ./helper.sh function_report_wrapper "${{ env.RELEASE_REPORT_FILENAME }}.md" "code quality (linter) check" ./helper.sh linter_check
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: code quality (sca - safety) check
       shell: bash
       run: ./helper.sh function_report_wrapper "${{ env.RELEASE_REPORT_FILENAME }}.md" "code quality (sca - safety) check" ./helper.sh sca_check
       env:
-        BASHUTILS_DONT_UPDATE: "1"
         SAFETY_KEY: ${{ secrets.SAFETY_KEY }} 
     - name: "code quality (sast - bandit) check"
       shell: bash
       run: ./helper.sh function_report_wrapper "${{ env.RELEASE_REPORT_FILENAME }}.md" "code quality (sast - bandit) check" ./helper.sh sast_check
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: unit tests
       shell: bash
       run: ./helper.sh function_report_wrapper "${{ env.RELEASE_REPORT_FILENAME }}.md" "unit tests" ./helper.sh test
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: unit test coverage
       shell: bash
       run: ./helper.sh function_report_wrapper "${{ env.RELEASE_REPORT_FILENAME }}.md" "unit test coverage" ./helper.sh test_coverage_check ${{ env.TEST_COVERAGE_THRESHOLD }}
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: create release report
       run: ./helper.sh generate_pdf_from_md "${{ env.RELEASE_REPORT_FILENAME }}.md" "${{ env.RELEASE_REPORT_FILENAME }}.pdf"
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: generate pr approvals report
       shell: bash
       run: |
         ./helper.sh generate_pr_approvals "${{ env.PR_APPROVALS_FILENAME }}.md" && \
         ./helper.sh generate_pdf_from_md "${{ env.PR_APPROVALS_FILENAME }}.md" "${{ env.PR_APPROVALS_FILENAME }}.pdf"
       env:
-        BASHUTILS_DONT_UPDATE: "1"
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
     - name: collect git folder
       run: ./helper.sh collect_dot_git
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: create release documentation
       run: ./helper.sh create_release_documentation "${{ env.PR_APPROVALS_FILENAME }}.pdf" "${{ env.RELEASE_REPORT_FILENAME }}.pdf"
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: Upload release documentation
       uses: actions/upload-artifact@v4
       with:
@@ -99,18 +79,13 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
     - name: install requirements
       run: ./helper.sh reqs
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: fetch release documentation
       uses: actions/download-artifact@v4
       with:
         name: ${{ env.RELEASE_DOCUMENTATION }} 
     - name: build
       run: ./helper.sh build
-      env:
-        BASHUTILS_DONT_UPDATE: "1"
     - name: publish
       run: ./helper.sh publish
       env:
-        BASHUTILS_DONT_UPDATE: "1"
         PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}        

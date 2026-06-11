@@ -7,9 +7,11 @@ env:
   RELEASE_DOCUMENTATION: "release_docs.tar.gz"
 
 on:
-  push:
+  pull_request:
     branches:
-      - "main"
+      - main
+  workflow_dispatch:  # Allows manual triggering from the Actions tab, useful for testing and re-runs.
+
 
 jobs:
   quality-assurance:
@@ -68,8 +70,6 @@ jobs:
     needs: quality-assurance
     runs-on: ubuntu-24.04
     environment: prd
-    permissions:
-      contents: write  # Required to create releases
     steps:
     - uses: actions/checkout@v4
       with:
@@ -90,8 +90,4 @@ jobs:
     - name: publish
       run: ./helper.sh publish
       env:
-        PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-    - name: release
-      run: ./helper.sh create_release
-      env:
-        PYPI_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
+        PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}        

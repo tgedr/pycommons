@@ -204,9 +204,20 @@ reqs(){
   info "$msg"
 }
 
+create_release(){
+  info "[create_release|in]"
+  
+  local version=$(uv run python -c "import tomllib; d=tomllib.load(open('pyproject.toml','rb')); print(d['project']['version'])")
+  info "[create_release] creating release version: $version"
+  gh release create "$version" "dist"/* --title "Release $version" --draft=false --notes "check build reports in tar bundle"
+  [ "$?" -ne "0" ] && err "[create_release] failed to create release" && exit 1
+  
+  info "[create_release|out]"
+}
+
 # <=== MAIN SECTION END  <===
 
-
+gh release create "1.2.1" "dist"/* --title "Release 1.2.1" --draft=false --notes "new release"
 # ===> FOOTER SECTION START  ===>
 
 usage() {
@@ -232,6 +243,7 @@ usage() {
       - generate_pdf_from_md <input_md> 
                               <output_pdf>    generates a PDF from a markdown file
       - create_release_documentation      generates release documentation
+      - create_release                    creates a GitHub release with the specified version in pyproject.toml with the contents of the dist folder
       
 EOM
   exit 1
@@ -286,6 +298,9 @@ case "$1" in
     ;;
   create_release_documentation)
     create_release_documentation "$GIT_TAR" "$2" "$3" "$RELEASE_DOCUMENTATION_FOLDER"
+    ;;
+  create_release)
+    create_release
     ;;
   *)
     usage

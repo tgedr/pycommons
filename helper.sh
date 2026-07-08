@@ -4,15 +4,24 @@
 
 # http://bash.cumulonim.biz/NullGlob.html
 shopt -s nullglob
-# -------------------------------
+
 this_folder="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 if [ -z "$this_folder" ]; then
   this_folder=$(dirname $(readlink -f $0))
 fi
 parent_folder=$(dirname "$this_folder")
 
-# -------------------------------
-# --- required functions
+# ------- CONSTANTS -------
+export FILE_VARIABLES=${FILE_VARIABLES:-".variables"}
+export FILE_LOCAL_VARIABLES=${FILE_LOCAL_VARIABLES:-".local_variables"}
+export FILE_SECRETS=${FILE_SECRETS:-".secrets"}
+export INCLUDE_FILE=${INCLUDE_FILE:-".bashutils"}
+export BASHUTILS_URL=${BASHUTILS_URL:-"https://api.github.com/repos/jtviegas/bashutils/contents/.bashutils"}
+export BASHUTILS_CHECKSUM_URL=${BASHUTILS_CHECKSUM_URL:-"https://api.github.com/repos/jtviegas/bashutils/contents/.bashutils.checksum"}
+export BASHUTILS_CHECK_INTERVAL_SECONDS=${BASHUTILS_CHECK_INTERVAL_SECONDS:-"86400"}
+
+# ------- header functions -------
+
 debug(){
     local __msg="$1"
     echo " [DEBUG] `date` ... $__msg "
@@ -33,7 +42,6 @@ err(){
     echo " [ERR]   `date` !!! $__msg "
 }
 
-
 source_if_exists() {
   local file="$1"
   if [ ! -f "$file" ]; then
@@ -44,15 +52,6 @@ source_if_exists() {
     . "$file"
   fi
 }
-
-# ---------- CONSTANTS ----------
-export FILE_VARIABLES=${FILE_VARIABLES:-".variables"}
-export FILE_LOCAL_VARIABLES=${FILE_LOCAL_VARIABLES:-".local_variables"}
-export FILE_SECRETS=${FILE_SECRETS:-".secrets"}
-export INCLUDE_FILE=${INCLUDE_FILE:-".bashutils"}
-export BASHUTILS_URL=${BASHUTILS_URL:-"https://api.github.com/repos/jtviegas/bashutils/contents/.bashutils"}
-export BASHUTILS_CHECKSUM_URL=${BASHUTILS_CHECKSUM_URL:-"https://api.github.com/repos/jtviegas/bashutils/contents/.bashutils.checksum"}
-export BASHUTILS_CHECK_INTERVAL_SECONDS=${BASHUTILS_CHECK_INTERVAL_SECONDS:-"86400"}
 
 get_file_mtime_epoch() {
   local file="$1"
@@ -167,7 +166,6 @@ download_bashutils_if_newer() {
 
 }
 
-# -------------------------------
 # --- source variables files
 source_if_exists "$this_folder/$FILE_VARIABLES"
 source_if_exists "$this_folder/$FILE_LOCAL_VARIABLES"
@@ -180,8 +178,8 @@ BASHUTILS_UPDATE="${BASHUTILS_UPDATE:-0}"
 
 # <=== HEADER SECTION END  <===
 
-
 # ===> MAIN SECTION    ===>
+
 # ---------- CONSTANTS ----------
 export SRC_DIR=${SRC_DIR:-"${this_folder}/src"}
 export TEST_DIR=${TEST_DIR:-"${this_folder}/tests"}
@@ -217,7 +215,6 @@ create_release(){
 
 # <=== MAIN SECTION END  <===
 
-gh release create "1.2.1" "dist"/* --title "Release 1.2.1" --draft=false --notes "new release"
 # ===> FOOTER SECTION START  ===>
 
 usage() {

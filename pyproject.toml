@@ -1,6 +1,6 @@
 [project]
 name = "tgedr-pycommons"
-version = "1.2.3"
+version = "2.0.0"
 description = "common python code usable across projects"
 authors = [
     {name = "joao tiago viegas",email = "3536754+jtviegas@users.noreply.github.com"}
@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.11,<3.14"
 
 dependencies = [
-    "numpy<2",
+    "numpy>2",
     "fpdf2~=2.8.4",
     "reportlab~=4.4.4",
     "markdown>=3.10.2,<4",
